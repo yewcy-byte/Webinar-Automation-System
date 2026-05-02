@@ -1,55 +1,116 @@
-import { createClient } from "@/lib/supabase/server";
-import { Suspense } from "react";
+"use client";
 
-async function InstrumentsData() {
-  const supabase = await createClient();
-  const { data: instruments, error } = await supabase
-    .from("instruments")
-    .select("*", { count: "exact" });
+import { useState } from "react";
 
-  const items = instruments ?? [];
+type UploadResponse = {
+  key: string;
+  publicVideoUrl: string;
+};
 
-            const imageUrl = `${process.env.NEXT_PUBLIC_CLOUDFRONT_URL}/Meeting with YEW CHOON YUEN-20260411_054130-Meeting Recording.mp4`;
-            const convertedUrl = encodeURI(imageUrl);
+export default function NotesPage() {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string>("");
+  const [videoUrl, setVideoUrl] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
+  async function handleUpload() {
+    if (!file) {
+      setError("Please select a video first.");
+      return;
+    }
+
+    setUploading(true);
+    setError(null);
+    setCopied(false);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "Upload failed" }));
+        throw new Error(body.error ?? "Upload failed");
+      }
+
+      const data = (await res.json()) as UploadResponse;
+      const watchLink = `${window.location.origin}/watch/${encodeURIComponent(data.key)}`;
+
+      setVideoUrl(data.publicVideoUrl);
+      setShareLink(watchLink);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unexpected upload error");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function copyLink() {
+    if (!shareLink) return;
+    await navigator.clipboard.writeText(shareLink);
+    setCopied(true);
+  }
 
   return (
+    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+      <h1 className="text-2xl font-bold">Upload Webinar Video</h1>
 
-    
-    <div className="space-y-4">
+      <div className="rounded border p-4">
+        <label className="mb-2 block text-sm font-medium">Select Video File</label>
+        <input
+          type="file"
+          accept="video/*"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="mb-3 block w-full"
+        />
 
-      <video 
-      width="640" 
-      height="360" 
-      controls 
-      preload="none" 
-      aria-label="Video player"
-    >
-      <source src={convertedUrl} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
+        <button
+          type="button"
+          onClick={handleUpload}
+          disabled={uploading}
+          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        >
+          {uploading ? "Uploading..." : "Upload to S3"}
+        </button>
 
-      {error ? <p>Failed to load instruments: {error.message}</p> : null}
+        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+      </div>
 
-      {!error && items.length === 0 ? <p>No instruments found.</p> : null}
+      {shareLink ? (
+        <div className="rounded border p-4">
+          <p className="mb-2 font-medium">Share Link</p>
+          <a href={shareLink} className="break-all text-blue-600 underline" target="_blank" rel="noreferrer">
+            {shareLink}
+          </a>
 
-      {!error && items.length > 0 ? (
-        <div className="grid gap-4 p-4">
-          {items.map((item, index) => (
-            <div key={index} className="rounded shadow-md p-4 hover:bg-amber-200 transition-colors">
-              <h2 className="mb-2 font-semibold">Instrument {index + 1}</h2>
-              <p className="text-gray-600">{item.name}</p>
-            </div>
-          ))}
+          <div className="mt-3 flex gap-3">
+            <button
+              type="button"
+              onClick={copyLink}
+              className="rounded border px-3 py-1"
+            >
+              Copy Link
+            </button>
+            {copied ? <span className="text-sm text-green-600">Copied!</span> : null}
+          </div>
         </div>
       ) : null}
-    </div>
-  );
-}
 
-export default function Instruments() {
-  return (
-    <Suspense fallback={<div>Loading instruments...</div>}>
-      <InstrumentsData />
-    </Suspense>
+      {videoUrl ? (
+        <div className="rounded border p-4">
+          <p className="mb-2 font-medium">Uploaded Video Preview</p>
+          <video controls className="w-full" preload="metadata">
+            <source src={videoUrl} type={file?.type || "video/mp4"} />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      ) : null}
+    </main>
   );
 }
