@@ -6,8 +6,8 @@ type QuestionDraft = {
   timestamp: number;
   type: "yes_no" | "multiple_choice" | "text";
   question: string;
-  importance: "high" | "medium" | "low";
   options: string[];
+  keywords: string[];
 };
 
 type QuestionFormProps = {
@@ -20,8 +20,8 @@ type QuestionFormProps = {
 type QuestionFormData = {
   question: string;
   type: "yes_no" | "multiple_choice" | "text";
-  importance: "high" | "medium" | "low";
   options: string[];
+  keywords: string;
 };
 
 export function QuestionForm({
@@ -35,23 +35,27 @@ export function QuestionForm({
   const [formData, setFormData] = useState<QuestionFormData>({
     question: "",
     type: "text",
-    importance: "medium",
     options: ["", ""],
+    keywords: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    const keywordsList = formData.type === "text" 
+      ? formData.keywords.split(",").map(k => k.trim()).filter(k => k)
+      : [];
+
     const questionPayload: QuestionDraft = {
       timestamp: currentTimestamp,
       type: formData.type,
       question: formData.question,
-      importance: formData.importance,
       options:
         formData.type === "multiple_choice"
           ? formData.options.filter((o) => o.trim())
           : [],
+      keywords: keywordsList,
     };
 
     if (!videoKey) {
@@ -65,8 +69,8 @@ export function QuestionForm({
       setFormData({
         question: "",
         type: "text",
-        importance: "medium",
         options: ["", ""],
+        keywords: "",
       });
       setIsOpen(false);
       setLoading(false);
@@ -79,7 +83,11 @@ export function QuestionForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           videoKey,
-          ...questionPayload,
+          timestamp: questionPayload.timestamp,
+          type: questionPayload.type,
+          question: questionPayload.question,
+          options: questionPayload.options,
+          keywords: questionPayload.keywords,
         }),
       });
 
@@ -88,8 +96,8 @@ export function QuestionForm({
       setFormData({
         question: "",
         type: "text",
-        importance: "medium",
         options: ["", ""],
+        keywords: "",
       });
       setIsOpen(false);
       onQuestionAdded?.();
@@ -145,43 +153,43 @@ export function QuestionForm({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium">Type</label>
-            <select
-              value={formData.type}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  type: e.target.value as QuestionFormData["type"],
-                })
-              }
-              className="mt-1 w-full rounded border border-gray-300 p-2"
-            >
-              <option value="text">Text Answer</option>
-              <option value="yes_no">Yes/No</option>
-              <option value="multiple_choice">Multiple Choice</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium">Importance</label>
-            <select
-              value={formData.importance}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  importance: e.target.value as QuestionFormData["importance"],
-                })
-              }
-              className="mt-1 w-full rounded border border-gray-300 p-2"
-            >
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium">Type</label>
+          <select
+            value={formData.type}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                type: e.target.value as QuestionFormData["type"],
+              })
+            }
+            className="mt-1 w-full rounded border border-gray-300 p-2"
+          >
+            <option value="text">Text Answer</option>
+            <option value="yes_no">Yes/No</option>
+            <option value="multiple_choice">Multiple Choice</option>
+          </select>
         </div>
+
+        {formData.type === "text" && (
+          <div>
+            <label className="block text-sm font-medium">
+              Keywords to Look For (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={formData.keywords}
+              onChange={(e) =>
+                setFormData({ ...formData, keywords: e.target.value })
+              }
+              placeholder="e.g., marketing, sales, growth"
+              className="mt-1 w-full rounded border border-gray-300 p-2"
+            />
+            <p className="mt-1 text-xs text-gray-600">
+              These keywords will help you filter relevant responses.
+            </p>
+          </div>
+        )}
 
         {formData.type === "multiple_choice" && (
           <div>
@@ -228,3 +236,4 @@ export function QuestionForm({
     </div>
   );
 }
+

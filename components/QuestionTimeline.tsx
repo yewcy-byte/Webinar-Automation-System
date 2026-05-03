@@ -7,8 +7,8 @@ type Question = {
   timestamp: number;
   type: string;
   question: string;
-  importance: string;
   options: string[];
+  keywords?: string[];
 };
 
 type QuestionTimelineProps = {
@@ -16,11 +16,6 @@ type QuestionTimelineProps = {
   videoDuration: number;
 };
 
-const IMPORTANCE_COLORS = {
-  high: "bg-red-500",
-  medium: "bg-yellow-500",
-  low: "bg-green-500",
-};
 
 export function QuestionTimeline({
   questions,
@@ -40,9 +35,7 @@ export function QuestionTimeline({
           <button
             key={q.id}
             onClick={() => setExpandedId(expandedId === q.id ? null : q.id)}
-            className={`absolute top-2 w-8 h-8 rounded-full flex items-center justify-center transform -translate-x-1/2 hover:scale-125 transition ${
-              IMPORTANCE_COLORS[q.importance as keyof typeof IMPORTANCE_COLORS]
-            } text-white text-xs font-bold cursor-pointer shadow-lg`}
+            className="absolute top-2 w-8 h-8 rounded-full flex items-center justify-center transform -translate-x-1/2 hover:scale-125 transition bg-blue-500 text-white text-xs font-bold cursor-pointer shadow-lg"
             style={{ left: `${getPositionPercent(q.timestamp)}%` }}
             title={`${q.question.substring(0, 30)}... at ${Math.floor(q.timestamp)}s`}
           >
@@ -62,15 +55,6 @@ export function QuestionTimeline({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold text-white ${
-                          IMPORTANCE_COLORS[
-                            q.importance as keyof typeof IMPORTANCE_COLORS
-                          ]
-                        }`}
-                      >
-                        {q.importance.toUpperCase()}
-                      </span>
                       <span className="text-sm text-gray-600">
                         {Math.floor(q.timestamp)}s
                       </span>

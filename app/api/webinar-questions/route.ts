@@ -8,8 +8,8 @@ export async function POST(request: Request) {
       timestamp,
       type,
       question,
-      importance = "medium",
       options = [],
+      keywords = [],
       correctAnswer,
     } = body;
 
@@ -28,21 +28,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!["high", "medium", "low"].includes(importance)) {
-      return Response.json(
-        { error: "Invalid importance. Must be: high, medium, or low" },
-        { status: 400 }
-      );
-    }
-
     const newQuestion = await prisma.webinarQuestion.create({
       data: {
         videoKey,
         timestamp: parseInt(timestamp),
         type,
         question,
-        importance,
         options: type === "multiple_choice" ? options : [],
+        keywords: type === "text" ? keywords : [],
         correctAnswer,
       },
     });
@@ -78,8 +71,9 @@ export async function GET(request: Request) {
     return Response.json(questions);
   } catch (error) {
     console.error("Error fetching questions:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return Response.json(
-      { error: "Failed to fetch questions" },
+      { error: `Failed to fetch questions: ${errorMessage}` },
       { status: 500 }
     );
   }
