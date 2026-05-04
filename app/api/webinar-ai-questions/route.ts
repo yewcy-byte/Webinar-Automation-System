@@ -83,7 +83,7 @@ async function transcribeVideo(videoUrl: string, videoKey: string): Promise<stri
   return transcript;
 }
 
-async function generateQuestionsFromTranscript(transcript: string, count: number): Promise<GeneratedQuestion[]> {
+async function generateQuestionsFromTranscript(transcript: string, count: number, estimatedDurationSeconds: number): Promise<GeneratedQuestion[]> {
   const geminiApiKey = getRequiredEnv("GEMINI_API_KEY");
 
   const prompt = [
@@ -93,7 +93,8 @@ async function generateQuestionsFromTranscript(transcript: string, count: number
     `Return ONLY valid JSON with this exact shape: { \"questions\": [{ \"timestamp\": number, \"type\": \"yes_no\" | \"multiple_choice\" | \"text\", \"question\": string, \"options\": string[], \"keywords\": string[] }] }`,
     `Generate exactly ${count} HR screening questions focused on qualifications, experience, and skills relevant to the job opening(s) mentioned.`,
     "Example: if the video mentions 'we need an experienced Java developer', ask 'How many years of professional Java development experience do you have?' or 'Which Java frameworks are you most proficient with?'",
-    "Timestamps should be estimated based on when job requirements are mentioned in the transcript (e.g., first mention = 120s, subsequent = 300s+).",
+    `IMPORTANT: The video is approximately ${estimatedDurationSeconds} seconds long. All timestamps must be BETWEEN 0 and ${estimatedDurationSeconds}. Distribute questions throughout the video duration.`,
+    "Timestamps should be estimated based on when job requirements are mentioned in the transcript, proportionally spread throughout the video.",
     "For yes_no questions, use options [\"Yes\", \"No\"].",
     "For multiple_choice questions, provide 3 to 4 concise skill or experience level options.",
     "For text questions, keep options empty and populate keywords with relevant job competencies or skills to match against answers.",
@@ -150,7 +151,14 @@ async function generateQuestionsFromTranscript(transcript: string, count: number
 
   const parsed = JSON.parse(jsonStr) as { questions?: GeneratedQuestion[] };
   const all = Array.isArray(parsed.questions) ? parsed.questions : [];
-  return all.slice(0, count);
+  
+  // Clamp timestamps to be within video duration (safety measure)
+  const clamped = all.map((q) => ({
+    ...q,
+    timestamp: Math.min(Math.max(0, q.timestamp), Math.max(1, estimatedDurationSeconds - 5)),
+  }));
+  
+  return clamped.slice(0, count);
 }
 
 function normalizeQuestion(question: GeneratedQuestion) {
@@ -169,7 +177,14 @@ export async function POST(request: Request) {
 
     const videoUrl = getVideoUrl(videoKey);
     const transcript = await transcribeVideo(videoUrl, videoKey);
-    const questions = await generateQuestionsFromTranscript(transcript, count);
+    
+    // Estimate video duration based on transcript word count
+    // Average speaking rate: ~140 words per minute
+    const wordCount = transcript.split(/\s+/).filter((w) => w.length > 0).length;
+    const estimatedMinutes = Math.max(1, Math.ceil(wordCount / 140));
+    const estimatedDurationSeconds = estimatedMinutes * 60;
+    
+    const questions = await generateQuestionsFromTranscript(transcript, count, estimatedDurationSeconds);
 
     if (questions.length === 0) {
       return Response.json(
