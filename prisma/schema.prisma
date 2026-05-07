@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model WebinarQuestion {
+  id            String   @id @default(cuid())
+  videoKey      String   @db.Text // S3 key of the video
+  timestamp     Int      // Timestamp in seconds
+  type          String   // "yes_no", "multiple_choice", "text"
+  question      String   @db.Text
+  options       String[] @default([]) // JSON array of options
+  correctAnswer String? // For future answer tracking
+  keywords      String[] @default([]) // Keywords/phrases to look for in text responses
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([videoKey])
+  @@index([timestamp])
+}
+
+model WebinarResponse {
+  id         String   @id @default(cuid())
+  questionId String
+  userEmail  String
+  answer     String   @db.Text
+  importance String   @default("medium") // "high", "medium", "low" - priority for this response
+  createdAt  DateTime @default(now())
+
+  @@index([questionId])
+  @@index([userEmail])
+}
+
+model WebinarSubmission {
+  id                 String   @id @default(cuid())
+  videoKey           String   @db.Text
+  userEmail          String
+  totalScore         Int
+  maxScore           Int
+  resumePath         String?  @db.Text
+  resumeUrl          String?  @db.Text
+  interviewStartDate DateTime?
+  interviewEndDate   DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([videoKey])
+  @@index([userEmail])
+}
+
+model InterviewAvailability {
+  id        String   @id @default(cuid())
+  videoKey  String   @db.Text // S3 key of the webinar
+  startDate DateTime // Start of availability range
+  endDate   DateTime // End of availability range
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([videoKey])
+}
