@@ -1,10 +1,10 @@
 # Webinar Automation System
 
-Webinar Automation System is a Next.js application for managing webinar videos, creating timestamped questions, collecting responses, and sending WhatsApp invitations in bulk. It is designed as a practical intern-preparation project that combines video upload, question workflows, Supabase persistence, AI-assisted question generation, and contact automation.
+Webinar Automation System is a Next.js application for managing webinar videos, creating timestamped questions, and collecting responses. It is designed as a practical intern-preparation project that combines video upload, question workflows, Supabase persistence, and AI-assisted question generation.
 
 ## What the project does
 
-The app lets you upload a webinar video, share a watch link, attach questions to specific timestamps, and store everything in Supabase-backed data models. It also includes a WhatsApp bulk messaging flow that reads an Excel file, personalizes a message for each recipient, and sends webinar invitations through the WhatsApp Cloud API.
+The app lets you upload a webinar video, share a watch link, attach questions to specific timestamps, and store everything in Supabase-backed data models.
 
 ## Core features
 
@@ -44,16 +44,6 @@ The app lets you upload a webinar video, share a watch link, attach questions to
 - Track webinar submissions with scores and resume metadata.
 - Support interview start and end dates for submissions.
 
-### WhatsApp bulk messaging
-
-- Upload an Excel file with contacts.
-- Auto-detect phone and name columns.
-- Validate phone numbers before sending.
-- Personalize each message with placeholders.
-- Set the webinar link inside the message.
-- Preview the final message before sending.
-- View successful and failed send counts.
-
 ## Tech stack
 
 - Next.js 16
@@ -63,14 +53,29 @@ The app lets you upload a webinar video, share a watch link, attach questions to
 - Supabase
 - Amazon S3 for video storage
 - CloudFront for video delivery
-- WhatsApp Cloud API
-- XLSX for spreadsheet parsing
 
 ## Main pages
 
 - `/uploadWebinar` - upload videos, manage questions, and generate AI questions.
 - `/watch/[key]` - watch a webinar video through a shareable link.
-- `/whatsapp` - send bulk WhatsApp invitations from an Excel file.
+
+## UI Screenshots
+
+### Upload Webinar Dashboard
+
+![Upload Webinar Dashboard](public/upload%20Webinar%20Dashboard.png)
+
+### Gemini AI Transcription and Auto Question Generation
+
+![Gemini API transcription and auto question generation with HR context](public/Gemini%20API%20transcription%20and%20auto%20question%20generation%20with%20HR%20context.png)
+
+### View Webinar Page
+
+![View Webinar Page](public/View%20Webinar%20Page.png)
+
+### Google Sign In
+
+![Google Sign In](public/Google%20Sign%20In.png)
 
 ## API routes
 
@@ -86,7 +91,6 @@ The app lets you upload a webinar video, share a watch link, attach questions to
 - `POST /api/webinar-responses` - store question responses.
 - `GET /api/webinar-submissions` - read webinar submissions.
 - `POST /api/webinar-submissions` - create a submission.
-- `POST /api/whatsapp/send-bulk` - send bulk WhatsApp messages.
 - `POST /api/auth/session` - manage session data.
 - `POST /api/webhook` - receive webhook events.
 
@@ -120,13 +124,6 @@ The app lets you upload a webinar video, share a watch link, attach questions to
 
 - `OPENAI_API_KEY`
 
-### WhatsApp
-
-- `WHATSAPP_PHONE_NUMBER_ID`
-- `WHATSAPP_ACCESS_TOKEN`
-- `WHATSAPP_BUSINESS_ACCOUNT_ID`
-- `WHATSAPP_VERIFY_TOKEN`
-
 ### Optional storage
 
 - `SUPABASE_RESUME_BUCKET`
@@ -147,15 +144,14 @@ npm install
 npm run dev
 ```
 
-4. Open the app in your browser and start uploading videos or sending WhatsApp invitations.
+4. Open the app in your browser and start uploading videos or managing webinar questions.
 
 ## Notes
 
 - The project uses Supabase for server-side data access and persistence.
 - Uploaded webinar videos are stored in S3 and served through CloudFront.
 - AI question generation depends on an uploaded video and a valid OpenAI key.
-- WhatsApp bulk messaging requires a valid Meta WhatsApp Cloud API setup.
 
 ## Project goal
 
-This project was built as an intern-preparation exercise to demonstrate a complete workflow around webinar management, automated question generation, and outreach automation in a single application.
+This project was built as an intern-preparation exercise to demonstrate a complete workflow around webinar management, automated question generation, and response tracking in a single application.
