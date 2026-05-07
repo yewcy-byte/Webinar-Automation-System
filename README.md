@@ -33,31 +33,6 @@ The app lets you upload a webinar video, share a watch link, attach questions to
 - Control how many AI questions are generated.
 - Pull the uploaded video from CloudFront, transcribe it, and store generated questions in the database.
 
-### Interview availability
-
-- Set interview availability windows for a webinar.
-- Store start and end dates per webinar video.
-
-### Webinar responses and submissions
-
-- Persist responses for webinar questions.
-- Track webinar submissions with scores and resume metadata.
-- Support interview start and end dates for submissions.
-
-## Tech stack
-
-- Next.js 16
-- React 19
-- TypeScript
-- Prisma
-- Supabase
-- Amazon S3 for video storage
-- CloudFront for video delivery
-
-## Main pages
-
-- `/uploadWebinar` - upload videos, manage questions, and generate AI questions.
-- `/watch/[key]` - watch a webinar video through a shareable link.
 
 ## UI Screenshots
 
@@ -76,6 +51,22 @@ The app lets you upload a webinar video, share a watch link, attach questions to
 ### Google Sign In
 
 ![Google Sign In](public/Google%20Sign%20In.png)
+
+## Tech stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Prisma
+- Supabase
+- Amazon S3 for video storage
+- CloudFront for video delivery
+
+## Main pages
+
+- `/uploadWebinar` - upload videos, manage questions, and generate AI questions.
+- `/watch/[key]` - watch a webinar video through a shareable link.
+
 
 ## API routes
 
